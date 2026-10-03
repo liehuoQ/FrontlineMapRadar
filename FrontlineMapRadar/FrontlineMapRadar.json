@@ -1,0 +1,14 @@
+{
+  "Author": "personal",
+  "Name": "Frontline Map Radar",
+  "Punchline": "纷争前线大地图玩家点显示",
+  "Description": "进入纷争前线并打开大地图后，在地图上用颜色点标注周围已加载玩家的位置（敌方红 / 友方蓝）。个人自用简化版。",
+  "InternalName": "FrontlineMapRadar",
+  "AssemblyVersion": "1.0.0.0",
+  "RepoUrl": "",
+  "ApplicableVersion": "any",
+  "DalamudApiLevel": 15,
+  "LoadPriority": 0,
+  "ImageUrls": [],
+  "IconUrl": ""
+}
