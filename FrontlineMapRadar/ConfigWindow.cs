@@ -165,11 +165,13 @@ internal sealed class ConfigWindow : Window, IDisposable
 
         ImGui.Spacing();
         var hideOwn = cfg.HideOwnTeam;
-        if (ImGui.Checkbox("隐藏本阵营", ref hideOwn))
+        if (ImGui.Checkbox("网页隐藏本阵营", ref hideOwn))
         {
             cfg.HideOwnTeam = hideOwn;
             changed = true;
         }
+
+        ImGui.TextDisabled("游戏内地图：只叠加敌方三色，我方用游戏自带标记");
 
         var radius = cfg.DotRadius;
         if (ImGui.SliderFloat("点半径", ref radius, 2f, 12f, "%.1f"))

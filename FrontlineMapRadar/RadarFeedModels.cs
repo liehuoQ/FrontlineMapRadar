@@ -57,6 +57,9 @@ internal sealed class RadarFeedPlayer
     public string RoleAction { get; set; } = string.Empty;
     public bool IsSelf { get; set; }
 
+    /// <summary>本阵营（自己/小队/同盟姓名栏，或已识别为本阵营 GC）。</summary>
+    public bool IsAlly { get; set; }
+
     /// <summary>地图归一化坐标 0–1（相对当前区域 Map 贴图）。</summary>
     public float X { get; set; }
 

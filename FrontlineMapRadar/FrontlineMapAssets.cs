@@ -12,8 +12,10 @@ internal static class FrontlineMapAssets
     public const uint SealRockTerritoryId = 633;
     public const uint OnsalTerritoryId = 888;
     public const uint BorderlandTerritoryId = 376;
+    /// <summary>沃戈尔·奇尔特 / 沃克奇特（凯旋战）7.4。</summary>
+    public const uint WorqorTerritoryId = 1313;
 
-    /// <summary>沃戈尔·奇尔特（凯旋战）临时别名文件键；真实 TerritoryId 运行时按地名匹配。</summary>
+    /// <summary>沃戈尔·奇尔特（凯旋战）底图文件键。</summary>
     public const string WorqorMapKey = "worqor";
 
     private static readonly Dictionary<uint, string> Titles = new()
@@ -22,6 +24,7 @@ internal static class FrontlineMapAssets
         [GloryTerritoryId] = "荣誉野（碎冰战）",
         [SealRockTerritoryId] = "尘封秘岩（争夺战）",
         [OnsalTerritoryId] = "昂萨哈凯尔（竞争战）",
+        [WorqorTerritoryId] = "沃戈尔·奇尔特（凯旋战）",
     };
 
     /// <summary>领地 → 资源文件名（不含扩展名）。</summary>
@@ -30,6 +33,7 @@ internal static class FrontlineMapAssets
         [GloryTerritoryId] = "554",
         [SealRockTerritoryId] = "633",
         [OnsalTerritoryId] = "888",
+        [WorqorTerritoryId] = WorqorMapKey,
     };
 
     private static readonly HashSet<uint> DiscoveredWorqorIds = new();
@@ -63,6 +67,7 @@ internal static class FrontlineMapAssets
                || name.Contains("Chirteh", StringComparison.OrdinalIgnoreCase)
                || name.Contains("沃戈尔", StringComparison.Ordinal)
                || name.Contains("奇尔特", StringComparison.Ordinal)
+               || name.Contains("沃克奇特", StringComparison.Ordinal)
                || name.Contains("凯旋战", StringComparison.Ordinal);
     }
 

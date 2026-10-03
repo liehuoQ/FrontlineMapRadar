@@ -40,6 +40,16 @@ internal static class FrontlineGcHelper
         return go == null ? (byte)0 : go->GetNamePlateColorType();
     }
 
+    /// <summary>姓名栏为本阵营样式（自己/小队/同盟）。</summary>
+    public static bool IsAllyNamePlate(byte colorType) => colorType is 1 or 2 or 20;
+
+    public static bool IsAllyNamePlate(IGameObject obj) =>
+        IsAllyNamePlate(GetNamePlateColorType(obj));
+
+    /// <summary>敌方三大国姓名栏色（可叠加绘制）。</summary>
+    public static bool IsHostileGc(FrontlineGc gc) =>
+        gc is FrontlineGc.Maelstrom or FrontlineGc.TwinAdder or FrontlineGc.Flames;
+
     /// <summary>
     /// 解析玩家阵营：敌方直接读姓名栏 GC 色；小队/同盟/自己视为本阵营。
     /// </summary>
@@ -51,7 +61,7 @@ internal static class FrontlineGcHelper
             return fromPlate;
 
         // 1=Self, 2=Party, 20=Alliance —— 前线里本阵营通常用这些，而不是 GC 色
-        return type is 1 or 2 or 20 ? ownGc : FrontlineGc.Unknown;
+        return IsAllyNamePlate(type) ? ownGc : FrontlineGc.Unknown;
     }
 
     /// <summary>

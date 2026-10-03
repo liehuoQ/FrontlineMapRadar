@@ -575,7 +575,7 @@ internal static class RadarWebPage
     --maelstrom: #e84a4a;
     --twin: #e6c933;
     --flames: #4a8cff;
-    --unknown: #9aa3ad;
+    --ally: #3dcc6a;
     --self: #ffffff;
   }
   * { box-sizing: border-box; }
@@ -721,8 +721,8 @@ internal static class RadarWebPage
       <span><i class="dot" style="background:var(--maelstrom)"></i>黑涡</span>
       <span><i class="dot" style="background:var(--flames)"></i>恒辉</span>
       <span><i class="dot" style="background:var(--twin)"></i>双蛇</span>
-      <span><i class="dot" style="background:var(--unknown)"></i>未知</span>
-      <span><i class="dot" style="background:var(--self); outline:2px solid #fff; outline-offset:1px"></i>自己（带朝向）</span>
+      <span><i class="dot" style="background:var(--ally)"></i>我方</span>
+      <span><i class="dot" style="background:var(--ally); outline:2px solid #fff; outline-offset:1px"></i>自己（带朝向）</span>
       <span>◇ A–D / 1–4 场景标记</span>
       <span>阵营徽章=出生点（己方放大高亮）</span>
       <span style="opacity:.85">N 职业 · [ ] 点 · , . 描边 · ; ' 标记</span>
@@ -734,7 +734,7 @@ const COLORS = {
   maelstrom: getCss('--maelstrom'),
   twinAdder: getCss('--twin'),
   flames: getCss('--flames'),
-  unknown: getCss('--unknown'),
+  ally: getCss('--ally'),
   self: getCss('--self'),
 };
 // 场景标记 A B C D / 1 2 3 4
@@ -1137,7 +1137,8 @@ function draw() {
     const c = applyCal(p.x, p.y);
     const px = m.x + clamp01(c.x) * m.w;
     const py = m.y + clamp01(c.y) * m.h;
-    const color = p.isSelf ? COLORS.self : (COLORS[p.gc] || COLORS.unknown);
+    const isAlly = !!(p.isAlly || p.isSelf || (state.ownGc && p.gc === state.ownGc));
+    const color = isAlly ? COLORS.ally : (COLORS[p.gc] || COLORS.ally);
     const r = p.isSelf ? baseR + 1.2 : baseR;
     const hitR = Math.max(r + outline + 2, 6);
 
@@ -1270,7 +1271,7 @@ function drawSpawnBases(m) {
       ctx.restore();
     } else {
       // 图片未加载时用色块+文字兜底
-      const color = COLORS[b.gc] || COLORS.unknown;
+      const color = COLORS[b.gc] || '#9aa3ad';
       ctx.beginPath();
       ctx.fillStyle = color;
       ctx.arc(px, py, half * 0.85, 0, Math.PI * 2);

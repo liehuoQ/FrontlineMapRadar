@@ -16,7 +16,7 @@ internal static class FrontlineHelper
         554,  // 荣誉野（碎冰战）Fields of Glory (Shatter)
         633,  // 尘封秘岩（争夺战）Seal Rock (Seize)
         888,  // 昂萨哈凯尔（竞争战）Onsal Hakair (Danshig Naadam)
-        // 沃戈尔·奇尔特（凯旋战）Worqor Chirteh (Triumph) — 7.4 新增，ID 可能随版本变化，另靠 ContentType / 地名兜底
+        1313, // 沃戈尔·奇尔特 / 沃克奇特（凯旋战）Worqor Chirteh (Triumph)
     ];
 
     // ContentFinderCondition.ContentType：纷争前线一般为 16
@@ -28,8 +28,13 @@ internal static class FrontlineHelper
             return false;
 
         var territoryId = clientState.TerritoryType;
-        if (KnownFrontlineTerritories.Contains(territoryId))
+        if (KnownFrontlineTerritories.Contains(territoryId)
+            || territoryId == FrontlineMapAssets.WorqorTerritoryId)
+        {
+            if (territoryId == FrontlineMapAssets.WorqorTerritoryId)
+                FrontlineMapAssets.RegisterWorqorTerritory(territoryId);
             return true;
+        }
 
         var sheet = dataManager.GetExcelSheet<TerritoryType>();
         if (sheet == null || !sheet.TryGetRow(territoryId, out var territory))

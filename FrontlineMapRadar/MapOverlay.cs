@@ -64,12 +64,10 @@ internal sealed unsafe class MapOverlay : IDisposable
         if (!TryRefreshMapGeometry(localPlayer.Position))
             return;
 
-        var ownGc = FrontlineGcHelper.InferOwnGc(plugin.ObjectTable);
         var cfg = plugin.Config;
         var maelstrom = ImGui.ColorConvertFloat4ToU32(cfg.MaelstromColor);
         var twinAdder = ImGui.ColorConvertFloat4ToU32(cfg.TwinAdderColor);
         var flames = ImGui.ColorConvertFloat4ToU32(cfg.FlamesColor);
-        var unknown = ImGui.ColorConvertFloat4ToU32(cfg.UnknownColor);
         var outlineColor = ImGui.ColorConvertFloat4ToU32(cfg.OutlineColor);
         var radius = Math.Clamp(cfg.DotRadius, 1f, 20f) * globalUiScale;
         var outline = Math.Max(0f, cfg.OutlineThickness);
@@ -88,17 +86,27 @@ internal sealed unsafe class MapOverlay : IDisposable
             if (player.ObjectKind != ObjectKind.Pc)
                 continue;
 
-            var gc = FrontlineGcHelper.Resolve(player, ownGc);
-            if (cfg.HideOwnTeam && ownGc != FrontlineGc.Unknown && gc == ownGc)
+            // 只叠加敌方三大国色；我方交给游戏自带地图标记，不再画灰色「未知」点
+            var gc = FrontlineGcHelper.FromNamePlateColorType(
+                FrontlineGcHelper.GetNamePlateColorType(player));
+            if (!FrontlineGcHelper.IsHostileGc(gc))
                 continue;
 
-            var color = gc switch
+            uint color;
+            switch (gc)
             {
-                FrontlineGc.Maelstrom => maelstrom,
-                FrontlineGc.TwinAdder => twinAdder,
-                FrontlineGc.Flames => flames,
-                _ => unknown,
-            };
+                case FrontlineGc.Maelstrom:
+                    color = maelstrom;
+                    break;
+                case FrontlineGc.TwinAdder:
+                    color = twinAdder;
+                    break;
+                case FrontlineGc.Flames:
+                    color = flames;
+                    break;
+                default:
+                    continue;
+            }
 
             var screen = WorldToMap(mapOrigin!.Value, player.Position);
             if (outline > 0f)

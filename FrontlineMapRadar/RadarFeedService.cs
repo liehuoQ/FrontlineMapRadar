@@ -101,8 +101,14 @@ public sealed class RadarFeedService : IDisposable
                 continue;
 
             var isSelf = player.EntityId == local.EntityId;
+            var plateType = FrontlineGcHelper.GetNamePlateColorType(player);
             var gc = FrontlineGcHelper.Resolve(player, ownGc);
-            if (!isSelf && hideOwn && ownGc != FrontlineGc.Unknown && gc == ownGc)
+            var isAlly = isSelf
+                         || FrontlineGcHelper.IsAllyNamePlate(plateType)
+                         || (ownGc != FrontlineGc.Unknown && gc == ownGc);
+
+            // 「隐藏本阵营」仅作用于网页推送；游戏内地图已不再叠加我方点
+            if (!isSelf && hideOwn && isAlly)
                 continue;
 
             rosterByEntity.TryGetValue(player.EntityId, out var roster);
@@ -116,9 +122,12 @@ public sealed class RadarFeedService : IDisposable
                 JobAbbr = roster?.JobAbbreviation ?? string.Empty,
                 Role = roster?.RoleName ?? string.Empty,
                 Gc = GcKey(gc),
-                GcName = FrontlineGcHelper.ToDisplayName(gc),
+                GcName = isAlly && !FrontlineGcHelper.IsHostileGc(gc)
+                    ? "我方"
+                    : FrontlineGcHelper.ToDisplayName(gc),
                 RoleAction = roster?.EquippedRoleActionName ?? string.Empty,
                 IsSelf = isSelf,
+                IsAlly = isAlly,
                 X = nx,
                 Y = ny,
                 Wx = player.Position.X,
