@@ -27,9 +27,12 @@ internal static class FrontlineMapAssets
         [WorqorTerritoryId] = "沃戈尔·奇尔特（凯旋战）",
     };
 
+    public const string BorderlandMapKey = "376";
+
     /// <summary>领地 → 资源文件名（不含扩展名）。</summary>
     private static readonly Dictionary<uint, string> MapKeys = new()
     {
+        [BorderlandTerritoryId] = BorderlandMapKey,
         [GloryTerritoryId] = "554",
         [SealRockTerritoryId] = "633",
         [OnsalTerritoryId] = "888",
@@ -37,6 +40,8 @@ internal static class FrontlineMapAssets
     };
 
     private static readonly HashSet<uint> DiscoveredWorqorIds = new();
+    private static readonly HashSet<uint> DiscoveredSealRockIds = new();
+    private static readonly HashSet<uint> DiscoveredBorderlandIds = new();
 
     public static IReadOnlyCollection<uint> KnownMapTerritoryIds
     {
@@ -44,6 +49,10 @@ internal static class FrontlineMapAssets
         {
             var set = new HashSet<uint>(MapKeys.Keys);
             foreach (var id in DiscoveredWorqorIds)
+                set.Add(id);
+            foreach (var id in DiscoveredSealRockIds)
+                set.Add(id);
+            foreach (var id in DiscoveredBorderlandIds)
                 set.Add(id);
             return set;
         }
@@ -56,6 +65,46 @@ internal static class FrontlineMapAssets
         DiscoveredWorqorIds.Add(territoryId);
         Titles[territoryId] = "沃戈尔·奇尔特（凯旋战）";
         MapKeys[territoryId] = WorqorMapKey;
+    }
+
+    public static void RegisterSealRockTerritory(uint territoryId)
+    {
+        if (territoryId == 0)
+            return;
+        DiscoveredSealRockIds.Add(territoryId);
+        Titles[territoryId] = "尘封秘岩（争夺战）";
+        MapKeys[territoryId] = "633";
+    }
+
+    public static void RegisterBorderlandTerritory(uint territoryId)
+    {
+        if (territoryId == 0)
+            return;
+        DiscoveredBorderlandIds.Add(territoryId);
+        Titles[territoryId] = "周边遗迹群（阵地战）";
+        MapKeys[territoryId] = BorderlandMapKey;
+    }
+
+    public static bool LooksLikeBorderlandName(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            return false;
+
+        return name.Contains("Borderland", StringComparison.OrdinalIgnoreCase)
+               || name.Contains("Carteneau", StringComparison.OrdinalIgnoreCase)
+               || name.Contains("周边遗迹", StringComparison.Ordinal)
+               || name.Contains("外缘遗迹", StringComparison.Ordinal)
+               || name.Contains("阵地战", StringComparison.Ordinal);
+    }
+
+    public static bool LooksLikeSealRockName(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            return false;
+
+        return name.Contains("Seal Rock", StringComparison.OrdinalIgnoreCase)
+               || name.Contains("尘封秘岩", StringComparison.Ordinal)
+               || name.Contains("尘封密岩", StringComparison.Ordinal);
     }
 
     public static bool LooksLikeWorqorName(string? name)
@@ -76,10 +125,22 @@ internal static class FrontlineMapAssets
         if (MapKeys.TryGetValue(territoryId, out var key))
             return key;
 
+        if (LooksLikeBorderlandName(placeName) || DiscoveredBorderlandIds.Contains(territoryId))
+        {
+            RegisterBorderlandTerritory(territoryId);
+            return BorderlandMapKey;
+        }
+
         if (LooksLikeWorqorName(placeName) || DiscoveredWorqorIds.Contains(territoryId))
         {
             RegisterWorqorTerritory(territoryId);
             return WorqorMapKey;
+        }
+
+        if (LooksLikeSealRockName(placeName) || DiscoveredSealRockIds.Contains(territoryId))
+        {
+            RegisterSealRockTerritory(territoryId);
+            return "633";
         }
 
         // 未知前线：默认荣誉野底图，避免黑屏
@@ -91,10 +152,22 @@ internal static class FrontlineMapAssets
 
     public static string GetDisplayName(uint territoryId, string? sheetName)
     {
+        if (LooksLikeBorderlandName(sheetName))
+        {
+            RegisterBorderlandTerritory(territoryId);
+            return "周边遗迹群（阵地战）";
+        }
+
         if (LooksLikeWorqorName(sheetName))
         {
             RegisterWorqorTerritory(territoryId);
             return "沃戈尔·奇尔特（凯旋战）";
+        }
+
+        if (LooksLikeSealRockName(sheetName))
+        {
+            RegisterSealRockTerritory(territoryId);
+            return "尘封秘岩（争夺战）";
         }
 
         if (Titles.TryGetValue(territoryId, out var title))
@@ -111,7 +184,20 @@ internal static class FrontlineMapAssets
     /// </summary>
     public static MapCalibration CreateDefaultCalibration(uint territoryId)
     {
-        // 四张资源均为带装饰边框的正方形羊皮纸图，留白比例接近
+        // 周边遗迹网页底图是游戏原版地图（无羊皮纸边框）
+        var key = MapKeys.TryGetValue(territoryId, out var k) ? k : null;
+        if (key == BorderlandMapKey || territoryId == BorderlandTerritoryId || DiscoveredBorderlandIds.Contains(territoryId))
+        {
+            return new MapCalibration
+            {
+                OffsetX = 0,
+                OffsetY = 0,
+                ScaleX = 1f,
+                ScaleY = 1f,
+                FlipY = false,
+            };
+        }
+
         return new MapCalibration
         {
             OffsetX = 0.048f,

@@ -34,6 +34,15 @@ internal sealed class ConfigWindow : Window, IDisposable
             changed = true;
         }
 
+        var focusLb = cfg.FocusLbPredictEnabled;
+        if (ImGui.Checkbox("焦点极限技预测", ref focusLb))
+        {
+            cfg.FocusLbPredictEnabled = focusLb;
+            changed = true;
+        }
+
+        ImGui.TextDisabled("前线内对焦点目标估算个人极限槽（无法读取他人真实槽）。");
+
         ImGui.Separator();
         ImGui.TextUnformatted("仅在纷争前线 + 打开大地图(M) 时绘制周围玩家点。");
         ImGui.TextDisabled("红 = 黑涡 / 蓝 = 恒辉 / 黄 = 双蛇");

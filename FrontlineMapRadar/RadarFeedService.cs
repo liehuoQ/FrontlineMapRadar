@@ -214,13 +214,27 @@ public sealed class RadarFeedService : IDisposable
 
     private List<RadarFeedMarker> CollectMarkers(MapMeta meta)
     {
-        FieldMarkerHelper.CollectActive(markerScratch);
-        if (markerScratch.Count == 0)
-            return [];
+        var list = new List<RadarFeedMarker>();
+        var used = new HashSet<int>();
 
-        var list = new List<RadarFeedMarker>(markerScratch.Count);
+        foreach (var (index, label, pos, _) in plugin.Roster.SnapshotLocalMarkers())
+        {
+            var (nx, ny) = WorldToMap01(pos, meta);
+            list.Add(new RadarFeedMarker
+            {
+                Index = index,
+                Label = label,
+                X = nx,
+                Y = ny,
+            });
+            used.Add(index);
+        }
+
+        FieldMarkerHelper.CollectActive(markerScratch);
         foreach (var (index, label, pos) in markerScratch)
         {
+            if (used.Contains(index))
+                continue;
             var (nx, ny) = WorldToMap01(pos, meta);
             list.Add(new RadarFeedMarker
             {

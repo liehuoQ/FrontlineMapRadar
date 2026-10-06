@@ -53,7 +53,7 @@ internal sealed class RosterWindow : Window, IDisposable
 
         ImGui.Spacing();
         ImGui.TextDisabled("职能技能：每职能三选一。自己直接读取；他人需观察到施放/咏唱后才会显示（未观测为「未知」）。");
-        ImGui.TextDisabled("在「标记」列选择 A/B/C/D/1/2/3/4，标记会跟随该玩家移动（需玩家在加载范围内）。");
+        ImGui.TextDisabled("在「标记」列选择 A/B/C/D/1/2/3/4，仅自己可见（本地标记），跟随玩家每帧更新。");
 
         if (!ImGui.BeginTable(
                 "RosterTable",

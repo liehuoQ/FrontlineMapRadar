@@ -62,6 +62,9 @@
     <None Update="Assets\gc\**\*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <EmbeddedResource Include="Assets\maps\376.jpg">
+      <LogicalName>FrontlineMapRadar.maps.376.jpg</LogicalName>
+    </EmbeddedResource>
     <EmbeddedResource Include="Assets\maps\554.jpg">
       <LogicalName>FrontlineMapRadar.maps.554.jpg</LogicalName>
     </EmbeddedResource>

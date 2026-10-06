@@ -132,6 +132,8 @@ internal sealed unsafe class PvpRoleActionScanner : IDisposable
                 var actionId = header->ActionId;
                 if (PvpRoleActionCatalog.IsRoleAction(actionId))
                     roster.RecordEquippedRoleAction(casterEntityId, actionId);
+
+                plugin.LbTracker.OnActionEffect(casterEntityId, actionId);
             }
         }
         catch (Exception ex)

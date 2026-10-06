@@ -11,7 +11,7 @@ using Lumina.Excel.Sheets;
 namespace FrontlineMapRadar;
 
 /// <summary>
-/// 扫描并记录本场纷争前线出现过的玩家，并维护场地标记跟随。
+/// 扫描并记录本场纷争前线出现过的玩家，并维护本地标记跟随。
 /// </summary>
 public sealed class PlayerRosterService : IDisposable
 {
@@ -22,8 +22,6 @@ public sealed class PlayerRosterService : IDisposable
     private PvpRoleActionScanner? roleActionScanner;
 
     private bool wasInFrontline;
-    private long lastMarkerUpdateMs;
-    private const int MarkerUpdateIntervalMs = 400;
 
     public PlayerRosterService(Plugin plugin)
     {
@@ -126,10 +124,6 @@ public sealed class PlayerRosterService : IDisposable
                         other.MarkerIndex = null;
                 }
             }
-            else if (player.MarkerIndex is { } oldIdx)
-            {
-                FieldMarkerHelper.Clear(oldIdx);
-            }
 
             player.MarkerIndex = markerIndex;
         }
@@ -158,7 +152,6 @@ public sealed class PlayerRosterService : IDisposable
         wasInFrontline = true;
         ScanPlayers();
         roleActionScanner?.Tick();
-        UpdateMarkers();
     }
 
     private unsafe void ScanPlayers()
@@ -235,24 +228,23 @@ public sealed class PlayerRosterService : IDisposable
         }
     }
 
-    private void UpdateMarkers()
+    /// <summary>本地点名册标记（仅本地绘制，每帧位置来自玩家坐标）。</summary>
+    public IReadOnlyList<(int Index, string Label, Vector3 Position, uint EntityId)> SnapshotLocalMarkers()
     {
-        var now = Environment.TickCount64;
-        if (now - lastMarkerUpdateMs < MarkerUpdateIntervalMs)
-            return;
-        lastMarkerUpdateMs = now;
-
-        List<(int Index, Vector3 Pos)> pending;
         lock (sync)
         {
-            pending = players.Values
+            return players.Values
                 .Where(p => p.MarkerIndex is not null && p.CurrentlyLoaded)
-                .Select(p => (p.MarkerIndex!.Value, p.LastPosition))
+                .Select(p =>
+                {
+                    var idx = p.MarkerIndex!.Value;
+                    var label = idx >= 0 && idx < RosterPlayer.FieldMarkerLabels.Length
+                        ? RosterPlayer.FieldMarkerLabels[idx]
+                        : (idx + 1).ToString();
+                    return (idx, label, p.LastPosition, p.EntityId);
+                })
                 .ToList();
         }
-
-        foreach (var (index, pos) in pending)
-            FieldMarkerHelper.TryPlace(index, pos);
     }
 
     private void ClearMarkers()
@@ -260,13 +252,7 @@ public sealed class PlayerRosterService : IDisposable
         lock (sync)
         {
             foreach (var p in players.Values)
-            {
-                if (p.MarkerIndex is { } idx)
-                {
-                    FieldMarkerHelper.Clear(idx);
-                    p.MarkerIndex = null;
-                }
-            }
+                p.MarkerIndex = null;
         }
     }
 }

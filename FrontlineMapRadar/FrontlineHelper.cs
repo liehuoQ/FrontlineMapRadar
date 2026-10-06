@@ -5,11 +5,11 @@ using Lumina.Excel.Sheets;
 namespace FrontlineMapRadar;
 
 /// <summary>
-/// 纷争前线区域判定。优先用已知 TerritoryId，再用 ContentFinderCondition / IsPvpZone 兜底。
+/// 纷争前线区域判定。优先用已知 TerritoryId，再用 IntendedUse / 地名 / ContentType 兜底。
+/// 周边遗迹（阵地战）的 ContentFinder ContentType 是 6（PvP）而不是 16，不能只认 16。
 /// </summary>
 internal static class FrontlineHelper
 {
-    // 常见纷争前线地图 TerritoryType.RowId
     private static readonly HashSet<uint> KnownFrontlineTerritories =
     [
         376,  // 周边遗迹群（阵地战）The Borderland Ruins (Secure)
@@ -19,8 +19,11 @@ internal static class FrontlineHelper
         1313, // 沃戈尔·奇尔特 / 沃克奇特（凯旋战）Worqor Chirteh (Triumph)
     ];
 
-    // ContentFinderCondition.ContentType：纷争前线一般为 16
+    // ContentFinderCondition.ContentType：部分前线为 16；周边遗迹等老图为 6（PvP）
     private const uint FrontlineContentType = 16;
+    private const uint PvpContentType = 6;
+    // TerritoryIntendedUse：Frontline = 18
+    private const uint FrontlineIntendedUse = 18;
 
     public static bool IsInFrontline(IClientState clientState, IDataManager dataManager)
     {
@@ -29,10 +32,11 @@ internal static class FrontlineHelper
 
         var territoryId = clientState.TerritoryType;
         if (KnownFrontlineTerritories.Contains(territoryId)
-            || territoryId == FrontlineMapAssets.WorqorTerritoryId)
+            || territoryId == FrontlineMapAssets.WorqorTerritoryId
+            || territoryId == FrontlineMapAssets.SealRockTerritoryId
+            || territoryId == FrontlineMapAssets.BorderlandTerritoryId)
         {
-            if (territoryId == FrontlineMapAssets.WorqorTerritoryId)
-                FrontlineMapAssets.RegisterWorqorTerritory(territoryId);
+            RegisterKnownTerritory(territoryId);
             return true;
         }
 
@@ -40,23 +44,98 @@ internal static class FrontlineHelper
         if (sheet == null || !sheet.TryGetRow(territoryId, out var territory))
             return false;
 
-        // ContentFinderCondition → ContentType（含 7.4 沃戈尔·奇尔特等新前线）
+        var place = territory.PlaceName.IsValid
+            ? territory.PlaceName.Value.Name.ToString()
+            : string.Empty;
+        var cfcName = string.Empty;
+        if (territory.ContentFinderCondition.RowId != 0 && territory.ContentFinderCondition.IsValid)
+            cfcName = territory.ContentFinderCondition.Value.Name.ToString();
+
+        if (RegisterByPlaceName(territoryId, place) || RegisterByPlaceName(territoryId, cfcName))
+            return true;
+
+        if (TryGetIntendedUse(territory, out var intended) && intended == FrontlineIntendedUse)
+        {
+            RegisterByPlaceName(territoryId, place);
+            return true;
+        }
+
         if (territory.ContentFinderCondition.RowId != 0 &&
             territory.ContentFinderCondition.IsValid)
         {
-            var cfc = territory.ContentFinderCondition.Value;
-            if (cfc.ContentType.RowId == FrontlineContentType)
+            var contentType = territory.ContentFinderCondition.Value.ContentType.RowId;
+            if (contentType == FrontlineContentType
+                || (contentType == PvpContentType && LooksLikeAnyFrontlineName(place, cfcName)))
+            {
+                RegisterByPlaceName(territoryId, place);
+                RegisterByPlaceName(territoryId, cfcName);
                 return true;
+            }
         }
 
-        // 地名兜底：沃戈尔·奇尔特
-        if (territory.PlaceName.IsValid &&
-            FrontlineMapAssets.LooksLikeWorqorName(territory.PlaceName.Value.Name.ToString()))
+        return false;
+    }
+
+    private static void RegisterKnownTerritory(uint territoryId)
+    {
+        if (territoryId == FrontlineMapAssets.WorqorTerritoryId)
+            FrontlineMapAssets.RegisterWorqorTerritory(territoryId);
+        else if (territoryId == FrontlineMapAssets.SealRockTerritoryId)
+            FrontlineMapAssets.RegisterSealRockTerritory(territoryId);
+        else if (territoryId == FrontlineMapAssets.BorderlandTerritoryId)
+            FrontlineMapAssets.RegisterBorderlandTerritory(territoryId);
+    }
+
+    private static bool RegisterByPlaceName(uint territoryId, string? name)
+    {
+        if (FrontlineMapAssets.LooksLikeBorderlandName(name))
+        {
+            FrontlineMapAssets.RegisterBorderlandTerritory(territoryId);
+            return true;
+        }
+
+        if (FrontlineMapAssets.LooksLikeSealRockName(name))
+        {
+            FrontlineMapAssets.RegisterSealRockTerritory(territoryId);
+            return true;
+        }
+
+        if (FrontlineMapAssets.LooksLikeWorqorName(name))
         {
             FrontlineMapAssets.RegisterWorqorTerritory(territoryId);
             return true;
         }
 
         return false;
+    }
+
+    private static bool LooksLikeAnyFrontlineName(string place, string cfcName) =>
+        FrontlineMapAssets.LooksLikeBorderlandName(place)
+        || FrontlineMapAssets.LooksLikeBorderlandName(cfcName)
+        || FrontlineMapAssets.LooksLikeSealRockName(place)
+        || FrontlineMapAssets.LooksLikeSealRockName(cfcName)
+        || FrontlineMapAssets.LooksLikeWorqorName(place)
+        || FrontlineMapAssets.LooksLikeWorqorName(cfcName)
+        || place.Contains("荣誉野", System.StringComparison.Ordinal)
+        || place.Contains("昂萨哈凯尔", System.StringComparison.Ordinal)
+        || cfcName.Contains("荣誉野", System.StringComparison.Ordinal)
+        || cfcName.Contains("碎冰战", System.StringComparison.Ordinal)
+        || cfcName.Contains("争夺战", System.StringComparison.Ordinal)
+        || cfcName.Contains("竞争战", System.StringComparison.Ordinal)
+        || cfcName.Contains("Frontline", System.StringComparison.OrdinalIgnoreCase)
+        || cfcName.Contains("纷争前线", System.StringComparison.Ordinal);
+
+    private static bool TryGetIntendedUse(in TerritoryType territory, out uint intendedUse)
+    {
+        intendedUse = 0;
+        try
+        {
+            intendedUse = territory.TerritoryIntendedUse.RowId;
+            return intendedUse != 0;
+        }
+        catch
+        {
+            return false;
+        }
     }
 }

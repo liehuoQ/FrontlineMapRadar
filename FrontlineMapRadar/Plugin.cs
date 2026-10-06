@@ -22,21 +22,27 @@ public sealed class Plugin : IDalamudPlugin
     [PluginService] public IPluginLog Log { get; private set; } = null!;
     [PluginService] public IFramework Framework { get; private set; } = null!;
     [PluginService] public IGameInteropProvider GameInteropProvider { get; private set; } = null!;
+    [PluginService] public ITargetManager TargetManager { get; private set; } = null!;
 
     public Configuration Config { get; private set; } = null!;
     public PlayerRosterService Roster { get; private set; } = null!;
     public RadarFeedService RadarFeed { get; private set; } = null!;
     public RadarHttpServer RadarHttp { get; private set; } = null!;
+    public FrontlineLbTracker LbTracker { get; private set; } = null!;
     public WindowSystem WindowSystem { get; } = new("FrontlineMapRadar");
 
     private ConfigWindow configWindow = null!;
     private RosterWindow rosterWindow = null!;
     private MapOverlay mapOverlay = null!;
+    private FocusLbHud focusLbHud = null!;
 
     public Plugin()
     {
         Config = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
         Config.Initialize(this);
+
+        FrontlineLbCatalog.InitializeFromSheets(DataManager, Log);
+        LbTracker = new FrontlineLbTracker(this);
 
         Roster = new PlayerRosterService(this);
         RadarFeed = new RadarFeedService(this);
@@ -48,6 +54,7 @@ public sealed class Plugin : IDalamudPlugin
         WindowSystem.AddWindow(rosterWindow);
 
         mapOverlay = new MapOverlay(this);
+        focusLbHud = new FocusLbHud(this);
 
         CommandManager.AddHandler(CommandName, new CommandInfo(OnCommand)
         {
@@ -77,7 +84,9 @@ public sealed class Plugin : IDalamudPlugin
 
         RadarHttp.Dispose();
         RadarFeed.Dispose();
+        focusLbHud.Dispose();
         mapOverlay.Dispose();
+        LbTracker.Dispose();
         Roster.Dispose();
         WindowSystem.RemoveAllWindows();
         configWindow.Dispose();

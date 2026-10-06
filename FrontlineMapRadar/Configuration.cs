@@ -60,6 +60,9 @@ public sealed class Configuration : IPluginConfiguration
     /// <summary>总开关</summary>
     public bool Enabled { get; set; } = true;
 
+    /// <summary>游戏内焦点目标极限技积蓄预测 HUD</summary>
+    public bool FocusLbPredictEnabled { get; set; } = true;
+
     /// <summary>向局域网推送雷达网页（平板浏览器打开）</summary>
     public bool RemoteRadarEnabled { get; set; }
 

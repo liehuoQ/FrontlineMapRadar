@@ -14,7 +14,13 @@ internal static class FrontlineSpawnPads
 
     private static readonly Dictionary<string, (float X, float Y)[]> PadsByMapKey = new()
     {
-        // 荣誉野：NW / NE / 南
+        // 周边遗迹：西 / 东 / 南（游戏地图 UV，底图无羊皮纸边框）
+        ["376"] =
+        [
+            (0.28f, 0.36f),
+            (0.72f, 0.36f),
+            (0.50f, 0.78f),
+        ],
         ["554"] =
         [
             (G(0.31f), G(0.31f)),
