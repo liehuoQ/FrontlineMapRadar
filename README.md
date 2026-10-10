@@ -39,7 +39,7 @@ dotnet build FrontlineMapRadar.sln -c Release
 
 1. **Dalamud 设置 → 常规**：打开 **启用插件开发者模式**（DevMode）
 2. **Dalamud 设置 → 实验性功能 / 开发中插件**：添加目录  
-   `C:\Users\30344\AppData\Roaming\XIVLauncherCN\devPlugins\FrontlineMapRadar`
+   `%AppData%\XIVLauncherCN\devPlugins\FrontlineMapRadar`
 3. 打开插件安装器，在 **开发中插件** 页启用 **Frontline Map Radar**
 4. 命令：
    - `/flradar` 打开设置
